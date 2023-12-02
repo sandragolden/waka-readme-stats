@@ -89,6 +89,9 @@ async def make_commit_day_time_list(time_zone: str, repositories: Dict, commit_d
     week_days = [0] * 7  # Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday
 
     for repository in repositories:
+        if repository is None:
+            continue
+
         if repository["name"] not in commit_dates.keys():
             continue
 
@@ -128,7 +131,7 @@ def make_language_per_repo_list(repositories: Dict) -> str:
     :returns: string representation of statistics.
     """
     language_count = dict()
-    repos_with_language = [repo for repo in repositories if repo["primaryLanguage"] is not None]
+    repos_with_language = [repo for repo in repositories if repo is not None and repo["primaryLanguage"] is not None]
     for repo in repos_with_language:
         language = repo["primaryLanguage"]["name"]
         language_count[language] = language_count.get(language, {"count": 0})

@@ -31,6 +31,9 @@ async def calculate_commit_data(repositories: Dict) -> Tuple[Dict, Dict]:
     yearly_data = dict()
     date_data = dict()
     for ind, repo in enumerate(repositories):
+        if repo is None:
+            continue
+
         if repo["name"] not in EM.IGNORED_REPOS:
             repo_name = "[private]" if repo["isPrivate"] else f"{repo['owner']['login']}/{repo['name']}"
             DBM.i(f"\t{ind + 1}/{len(repositories)} Retrieving repo: {repo_name}")

@@ -184,16 +184,13 @@ class DownloadManager:
         else:
             res = DownloadManager._REMOTE_RESOURCES_CACHE[resource]
             DBM.g(f"\tQuery '{resource}' loaded from cache!")
-        if res.status_code == 200:
+        if res.status_code in [200, 202]:
             if convertor is None:
                 return res.json()
             else:
                 return convertor(res.content)
         elif res.status_code == 201:
             DBM.w(f"\tQuery '{resource}' returned 201 status code")
-            return None
-        elif res.status_code == 202:
-            DBM.w(f"\tQuery '{resource}' returned 202 status code")
             return None
         else:
             raise Exception(f"Query '{res.url}' failed to run by returning code of {res.status_code}: {res.json()}")
@@ -256,6 +253,8 @@ class DownloadManager:
             return response["nodes"], response["pageInfo"]
         elif len(response) == 1 and isinstance(response[list(response.keys())[0]], Dict):
             return DownloadManager._find_pagination_and_data_list(response[list(response.keys())[0]])
+        elif "data" in response.keys() and "errors" in response.keys():
+            return DownloadManager._find_pagination_and_data_list(response["data"])
         else:
             return list(), dict(hasNextPage=False)
 

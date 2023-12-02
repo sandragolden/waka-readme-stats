@@ -101,7 +101,7 @@ inputs:
     required: false
     description: "Git commit with your own name and email"
     default: "False"
-  
+
   COMMIT_MESSAGE:
     required: false
     description: "Git commit message"
@@ -111,7 +111,7 @@ inputs:
     required: false
     description: "Git commit custom username"
     default: ""
-  
+
   COMMIT_EMAIL:
     required: false
     description: "Git commit custom email"
@@ -149,7 +149,7 @@ inputs:
 
 runs:
   using: 'docker'
-  image: 'docker://wakareadmestats/waka-readme-stats:master'
+  image: 'Dockerfile'
 
 branding:
   icon: 'activity'
