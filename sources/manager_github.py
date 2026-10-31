@@ -153,16 +153,33 @@ class GitHubManager:
         DBM.i("Committing files to repo...")
         GitHubManager.REPO.index.commit(EM.COMMIT_MESSAGE, author=actor, committer=actor)
 
-        if EM.COMMIT_SINGLE:
-            DBM.i("Pushing files to repo as a single commit...")
-            refspec = f"{GitHubManager._SINGLE_COMMIT_BRANCH}:{GitHubManager.branch(EM.PUSH_BRANCH_NAME)}"
-            headers = GitHubManager.REPO.remotes.origin.push(force=True, refspec=refspec)
-        else:
-            DBM.i("Pushing files to repo...")
-            headers = GitHubManager.REPO.remotes.origin.push()
+        # Authenticate the push with an Authorization header instead of a token
+        # embedded in the remote URL. GitHub issues a trailing-slash redirect on
+        # the receive-pack endpoint; across that redirect git drops URL-embedded
+        # credentials (curl does not resend them once the path changes) and then
+        # fails with "could not read Username for 'https://github.com'". An
+        # http.extraheader is reattached to every request, including the
+        # same-origin redirect, which is how actions/checkout authenticates.
+        # Passed via GIT_CONFIG_* env so the token never lands in .git/config.
+        push_url = f"https://github.com/{GitHubManager._REMOTE_NAME}.git"
+        basic = b64encode(f"x-access-token:{EM.GH_TOKEN}".encode()).decode()
+        auth_env = {
+            "GIT_CONFIG_COUNT": "1",
+            "GIT_CONFIG_KEY_0": "http.extraheader",
+            "GIT_CONFIG_VALUE_0": f"AUTHORIZATION: basic {basic}",
+        }
+        push_branch = GitHubManager.branch(EM.PUSH_BRANCH_NAME)
+        with GitHubManager.REPO.git.custom_environment(**auth_env):
+            if EM.COMMIT_SINGLE:
+                DBM.i("Pushing files to repo as a single commit...")
+                refspec = f"{GitHubManager._SINGLE_COMMIT_BRANCH}:{push_branch}"
+                output = GitHubManager.REPO.git.push("--porcelain", "--force", push_url, refspec)
+            else:
+                DBM.i("Pushing files to repo...")
+                output = GitHubManager.REPO.git.push("--porcelain", push_url, f"HEAD:{push_branch}")
 
-        if len(headers) == 0:
-            DBM.i(f"Repository push error: {headers}!")
+        if not output.strip():
+            DBM.i(f"Repository push error: {output}!")
         else:
             DBM.i("Repository synchronized!")
 
