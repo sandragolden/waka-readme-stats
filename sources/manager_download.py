@@ -123,8 +123,12 @@ async def init_download_manager(user_login: str):
     """
     await DownloadManager.load_remote_resources(
         linguist="https://cdn.jsdelivr.net/gh/github/linguist@master/lib/linguist/languages.yml",
-        waka_latest=f"https://wakatime.com/api/v1/users/current/stats/last_7_days?api_key={EM.WAKATIME_API_KEY}",
-        waka_all=f"https://wakatime.com/api/v1/users/current/all_time_since_today?api_key={EM.WAKATIME_API_KEY}",
+        # WakaTime now rejects raw API keys on read endpoints ("API Key
+        # authentication is only allowed for supported plugin endpoints"). Read
+        # stats require an OAuth access token, passed via the access_token arg.
+        # WAKATIME_API_KEY must hold a waka_tok_... OAuth token with read_stats.
+        waka_latest=f"https://wakatime.com/api/v1/users/current/stats/last_7_days?access_token={EM.WAKATIME_API_KEY}",
+        waka_all=f"https://wakatime.com/api/v1/users/current/all_time_since_today?access_token={EM.WAKATIME_API_KEY}",
         github_stats=f"https://github-contributions.vercel.app/api/v1/{user_login}",
     )
 
